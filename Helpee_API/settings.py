@@ -29,10 +29,7 @@ SECRET_KEY = "django-insecure-pqq6zdvz$34bc!jk9zlm=(1)%r10l)!q)ws@+#@ci0%nc-i&yl
 DEBUG = True
 SITE_ID = 1
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "devjam-api-1070656881929.europe-west1.run.app"
-]
+ALLOWED_HOSTS = True
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -151,7 +148,7 @@ SOCIAL_AUTH_PIPELINE = (
     'core.auth_pipeline.assign_user_role',  # ⬅️ 用 core 開頭
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
-    'social_core.pipeline.user.user_details',
+    'social_core.pipeline.uawser.user_details',
 )
 
 REST_FRAMEWORK = {
