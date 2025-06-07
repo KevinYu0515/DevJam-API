@@ -10,7 +10,6 @@ COPY manage.py .
 COPY Helpee_API/ ./Helpee_API/
 COPY core/ ./core/
 COPY staticfiles/ ./staticfiles/
-COPY .env .
 
 # 安裝依賴
 RUN pip install --upgrade pip \
@@ -19,7 +18,6 @@ RUN pip install --upgrade pip \
 # 收集靜態檔案（避免部署時錯誤）
 RUN python manage.py collectstatic --noinput
 
-# 設定埠口（Cloud Run 預設 8080）
 ENV PORT 6007
 EXPOSE 6007
 
