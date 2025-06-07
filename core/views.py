@@ -3,8 +3,8 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Product, Order
-from .serializers import ProductSerializer, OrderSerializer
+from .models import Product, Order, ShopOwner
+from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer
 
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
 @api_view(['GET', 'POST'])
@@ -89,3 +89,20 @@ def order_detail(request, pk):
     if request.method == 'DELETE':
         order.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# 商店老闆列表視圖：處理 GET（獲取所有商店老闆）和 POST（創建新商店老闆）請求
+@api_view(['GET', 'POST'])
+def shopowner_list(request):
+    if request.method == 'GET':
+        # 獲取所有商店老闆
+        shopowners = ShopOwner.objects.all()
+        serializer = ShopOwnerSerializer(shopowners, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        # 創建新商店老闆
+        serializer = ShopOwnerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
