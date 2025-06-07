@@ -673,3 +673,12 @@ def process_purchase(request):
         'amount': amount,
         'history_id': history['data']['id']
     }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def parse_jwt(request):
+    jwt_payload = getattr(request, 'jwt_payload', None)
+    print(jwt_payload)
+    if not jwt_payload:
+        return Response({'error': 'Missing or invalid JWT'}, status=status.HTTP_401_UNAUTHORIZED)
+    return Response(jwt_payload)

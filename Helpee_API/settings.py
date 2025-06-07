@@ -42,6 +42,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    'core.auth.JWTMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -49,7 +50,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'core.auth.JWTMiddleware',
 ]
 
 ROOT_URLCONF = "Helpee_API.urls"

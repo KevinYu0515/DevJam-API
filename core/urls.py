@@ -22,4 +22,5 @@ urlpatterns = [
     path('login/', views.login, name='token_obtain_pair'),  # 登入
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # 刷新
     path('purchase/', views.process_purchase, name='purchase'),
+    path('parse_jwt/', views.parse_jwt, name='parse_jwt'),
 ]
