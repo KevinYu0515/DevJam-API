@@ -644,22 +644,21 @@ def process_purchase(request):
     try:
         user = User.objects.get(id=uid, username=username)
     except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'User not found'}, status==status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     try:
         item_id = request.data.get('itemID')
-        item = ShopItem.objects.get(id=item_id)
-    except ShopItem.DoesNotExist:
-        return Response({'error': 'Item not found'}, status=status.HTTP_404_NOT_FOUND)
+        item = Product.objects.get(id=item_id)
+    except Product.DoesNotExist:
+        return Response({'error': 'Item not found'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # 建立購買紀錄
     history = purchase_item(uid, item_id, amount)
-    print(history)
 
     return Response({
         'message': 'Purchase successful',
         'user': user.username,
-        'item': item.itemName,
+        'item': item.name,
         'amount': amount,
         'history_id': history['data']['id']
     }, status=status.HTTP_201_CREATED)

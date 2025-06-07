@@ -32,9 +32,19 @@ class ShopItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'shopID', 'shop_name', 'itemName', 'price']
 
 class PurchaseHistorySerializer(serializers.ModelSerializer):
+    itemName = serializers.SerializerMethodField()
+
     class Meta:
         model = PurchaseHistory
-        fields = ['id', 'uid', 'itemID', 'purchase_time', 'amount'] 
+        fields = ['id', 'uid', 'itemName', 'purchase_time', 'amount']
+
+    def get_itemName(self, obj):
+        try:
+            item = Product.objects.get(id=obj.itemID)
+            print(item)
+            return item.name
+        except Product.DoesNotExist:
+            return None
 
 User = get_user_model()
 
@@ -114,9 +124,9 @@ class PurchaseHistorySerializer(serializers.ModelSerializer):
     
     def get_itemName(self, obj):
         try:
-            item = ShopItem.objects.get(id=obj.itemID)
-            return item.itemName
-        except ShopItem.DoesNotExist:
+            item = Product.objects.get(id=obj.itemID)
+            return item.name
+        except Product.DoesNotExist:
             return None
 
 class CoinSerializer(serializers.ModelSerializer):

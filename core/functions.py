@@ -17,9 +17,6 @@ def purchase_item(uid, item_id, amount):
         }
     """
     try:
-        # 檢查商品是否存在
-        shop_item = ShopItem.objects.get(pk=item_id)
-        
         # 創建購買記錄
         purchase = PurchaseHistory.objects.create(
             uid=uid,
