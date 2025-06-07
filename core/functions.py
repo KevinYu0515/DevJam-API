@@ -26,14 +26,14 @@ def purchase_item(uid, item_id, amount):
             itemID=item_id,
             amount=amount
         )
-        
+
         return {
             'success': True,
             'message': '購買成功',
             'data': {
                 'id': purchase.id,
                 'uid': purchase.uid,
-                'itemID': purchase.itemID.id,
+                'itemID': purchase.itemID,
                 'purchase_time': purchase.purchase_time
             }
         }

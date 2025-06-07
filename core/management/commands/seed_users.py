@@ -9,13 +9,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         users_data = [
-            {"username": "normaluser1", "password": "TestPass123", "email": "normal1@example.com", "user_type": "normal"},
-            {"username": "normaluser2", "password": "TestPass123", "email": "normal2@example.com", "user_type": "normal"},
-            {"username": "normaluser3", "password": "TestPass123", "email": "normal3@example.com", "user_type": "normal"},
-            {"username": "disadvuser1", "password": "TestPass123", "email": "disadv1@example.com", "user_type": "disadvantage"},
-            {"username": "disadvuser2", "password": "TestPass123", "email": "disadv2@example.com", "user_type": "disadvantage"},
-            {"username": "disadvuser3", "password": "TestPass123", "email": "disadv3@example.com", "user_type": "disadvantage"},
-            {"username": "adminuser", "password": "AdminPass123", "email": "admin@example.com", "user_type": "admin"},
+            {"username": "normaluser1", "password": "TestPass123", "email": "normal1@example.com", "user_type": "normal", "account": "normal1"},
+            {"username": "normaluser2", "password": "TestPass123", "email": "normal2@example.com", "user_type": "normal", "account": "normal2"},
+            {"username": "normaluser3", "password": "TestPass123", "email": "normal3@example.com", "user_type": "normal", "account": "normal3"},
+            {"username": "disadvuser1", "password": "TestPass123", "email": "disadv1@example.com", "user_type": "disadvantage", "account": "disadv1"},
+            {"username": "disadvuser2", "password": "TestPass123", "email": "disadv2@example.com", "user_type": "disadvantage", "account": "disadv2"},
+            {"username": "disadvuser3", "password": "TestPass123", "email": "disadv3@example.com", "user_type": "disadvantage", "account": "disadv3"},
+            {"username": "adminuser", "password": "AdminPass123", "email": "admin@example.com", "user_type": "admin", "account": "admin"},
+            {"username": "adminuser2", "password": "AdminPass123", "email": "admin2@example.com", "user_type": "admin", "account": "admin2"},
         ]
 
         # 先刪除所有這些 username 的使用者（含子模型依照你DB設定）
@@ -34,6 +35,7 @@ class Command(BaseCommand):
                 email=udata["email"],
                 password=udata["password"],
                 user_type=udata["user_type"],
+                account=udata["account"],
             )
 
             # 根據 user_type 建立子表

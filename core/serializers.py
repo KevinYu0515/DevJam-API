@@ -34,7 +34,7 @@ class ShopItemSerializer(serializers.ModelSerializer):
 class PurchaseHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseHistory
-        fields = ['id', 'itemID', 'purchase_time', 'amount'] 
+        fields = ['id', 'uid', 'itemID', 'purchase_time', 'amount'] 
 
 User = get_user_model()
 
@@ -102,15 +102,33 @@ class ShopItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'shopID', 'shop_name', 'itemName', 'price']
 
 class PurchaseHistorySerializer(serializers.ModelSerializer):
+    timestamp = serializers.SerializerMethodField()
+    itemName = serializers.SerializerMethodField()
+
     class Meta:
         model = PurchaseHistory
-        fields = ['id', 'itemID', 'purchase_time', 'amount']
+        fields = ['id', 'itemName', 'timestamp', 'amount']
+    
+    def get_timestamp(self, obj):
+        return obj.purchase_time.strftime('%Y/%m/%d/%H:%M')
+    
+    def get_itemName(self, obj):
+        try:
+            item = ShopItem.objects.get(id=obj.itemID)
+            return item.itemName
+        except ShopItem.DoesNotExist:
+            return None
 
 class CoinSerializer(serializers.ModelSerializer):
+    createTime = serializers.SerializerMethodField()
+
     class Meta:
         model = Coin
-        fields = ['id', 'createTime', 'sponsor', 'owner', 'usedTime', 'itemID']
+        fields = ['id', 'createTime', 'sponsor', 'owner', 'usedTime', 'itemID', 'amount']
         read_only_fields = ['id', 'createTime']  # 這些欄位只能讀取，不能修改 
+    
+    def get_createTime(self, obj):
+        return obj.createTime.strftime('%Y/%m/%d')
 
 class LoginSerializer(serializers.Serializer):
     account = serializers.CharField()

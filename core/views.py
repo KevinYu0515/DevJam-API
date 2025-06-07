@@ -7,9 +7,11 @@ from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser
 from rest_framework_simplejwt.views import TokenObtainPairView
+from datetime import datetime
 from .serializers import *
 from core.models import *
 from core.functions import *
+import jwt
 
 
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
@@ -521,85 +523,72 @@ def shopitem_detail(request, pk):
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-# Coin API views
-@api_view(['GET', 'POST'])
+@extend_schema(
+    request=CoinSerializer,
+    responses=CoinSerializer(many=True),
+    summary="Coin API",
+    examples=[
+        OpenApiExample(
+            name="CoinExample",
+            summary="Coin 資料範例",
+            value=[
+                {
+                    "id": 1,
+                    "createTime": "2025-06-08T10:00:00Z",
+                    "sponsor": 3,
+                    "owner": 8,
+                    "usedTime": None,
+                    "itemID": 1
+                },
+                {
+                    "id": 2,
+                    "createTime": "2025-06-08T10:30:00Z",
+                    "sponsor": 4,
+                    "owner": 9,
+                    "usedTime": "2025-06-08T11:00:00Z",
+                    "itemID": 2
+                }
+            ],
+            response_only=True
+        )
+    ]
+)
+@api_view(['GET'])
 def coin_list(request):
     """
     處理硬幣的列表和創建
     GET: 獲取所有硬幣
-    POST: 創建新硬幣
     """
-    if request.method == 'GET':
-        coins = Coin.objects.all()
-        serializer = CoinSerializer(coins, many=True)
-        return Response(serializer.data)
+    jwt_payload = getattr(request, 'jwt_payload', None)
+    coins = Coin.objects.filter(sponsor=jwt_payload.get('uid'))
+    serializer = CoinSerializer(coins, many=True)
+    return Response(serializer.data)
 
-    elif request.method == 'POST':
-        serializer = CoinSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@extend_schema(
+    summary="新增 Coin",
+    request={
+        'application/x-www-form-urlencoded': CoinSerializer,
+    },
+    responses={
+        201: OpenApiResponse(description="成功建立 coin"),
+        400: OpenApiResponse(description="錯誤：缺少 token 或 amount")
+    }
+)
+@api_view(['POST'])
+def create_coin(request):    
+    jwt_payload = getattr(request, 'jwt_payload', None)
+    print(request.data)
+    amount = request.data.get('amount')
+    if not jwt_payload.get('uid'):
+        return Response({'error': 'uid is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def coin_detail(request, pk):
-    """
-    處理單個硬幣的獲取、更新和刪除
-    GET: 獲取特定硬幣
-    PUT: 更新硬幣
-    DELETE: 刪除硬幣
-    """
-    try:
-        coin = Coin.objects.get(pk=pk)
-    except Coin.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        logger.error(f"Error retrieving coin: {str(e)}")
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    coin = Coin.objects.create(sponsor=jwt_payload.get('uid'), amount=amount)
 
-    if request.method == 'GET':
-        try:
-            serializer = CoinSerializer(coin)
-            return Response(serializer.data)
-        except Exception as e:
-            logger.error(f"Error serializing coin: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # 寫入資料庫
+    coin.save()
 
-    elif request.method == 'PUT':
-        try:
-            # 檢查請求資料
-            if not request.data:
-                return Response({'error': '請求資料不能為空'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # 只更新提供的欄位
-            serializer = CoinSerializer(coin, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            
-            # 返回詳細的驗證錯誤
-            error_details = {}
-            for field, errors in serializer.errors.items():
-                error_details[field] = str(errors[0])
-            return Response({
-                'error': '資料驗證失敗',
-                'details': error_details
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
-        except Exception as e:
-            logger.error(f"Error updating coin: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    elif request.method == 'DELETE':
-        try:
-            coin.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Exception as e:
-            logger.error(f"Error deleting coin: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-
-
+    # 回傳建立的 Coin（只回傳 ID 和 owner，避免一次序列化太大）
+    return Response({'created': amount}, status=status.HTTP_201_CREATED)
 
 @extend_schema(
     request=LoginSerializer,
@@ -648,7 +637,7 @@ def process_purchase(request):
 
     uid = jwt_payload.get('uid')
     username = jwt_payload.get('username')
-    
+
     # 取得購買數量（可選，預設 1）
     amount = int(request.data.get('amount', 1))
 
@@ -658,13 +647,14 @@ def process_purchase(request):
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
     try:
-        item_id = request.data.get('item')
+        item_id = request.data.get('itemID')
         item = ShopItem.objects.get(id=item_id)
     except ShopItem.DoesNotExist:
         return Response({'error': 'Item not found'}, status=status.HTTP_404_NOT_FOUND)
 
     # 建立購買紀錄
     history = purchase_item(uid, item_id, amount)
+    print(history)
 
     return Response({
         'message': 'Purchase successful',
@@ -674,6 +664,13 @@ def process_purchase(request):
         'history_id': history['data']['id']
     }, status=status.HTTP_201_CREATED)
 
+@api_view(['GET'])
+def get_user_purchase_history(request):
+    jwt_payload = getattr(request, 'jwt_payload', None)
+    uid = jwt_payload.get('uid')
+    history = PurchaseHistory.objects.filter(uid=uid)
+    serializer = PurchaseHistorySerializer(history, many=True)
+    return Response(serializer.data)
 
 @api_view(['GET'])
 def parse_jwt(request):
@@ -682,3 +679,15 @@ def parse_jwt(request):
     if not jwt_payload:
         return Response({'error': 'Missing or invalid JWT'}, status=status.HTTP_401_UNAUTHORIZED)
     return Response(jwt_payload)
+
+@extend_schema(
+    summary="取得使用者捐贈硬幣數量"
+)
+@api_view(['GET'])
+def get_user_coins(request, uid):
+    try:
+        coins = Coin.objects.filter(sponsor=uid)
+    except Coin.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({'success': True, 'coins_amount': coins.count()}, status=status.HTTP_200_OK)

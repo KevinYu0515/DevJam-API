@@ -32,7 +32,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 ALLOWED_HOSTS = [
     "localhost",
-    "devjam-api-1070656881929.europe-west1.run.app"
+    "devjam-api-1070656881929.europe-west1.run.app",
+    "era-obviously-complex-ky.trycloudflare.com"
 ]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [

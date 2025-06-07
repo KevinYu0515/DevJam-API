@@ -18,9 +18,11 @@ urlpatterns = [
     path('getuser/normal/', views.getuser_normal, name='getuser_normal'),
     path('shopitem/<int:pk>/', views.shopitem_detail, name='shopitem-detail'),
     path('coin/', views.coin_list, name='coin-list'),
-    path('coin/<int:pk>/', views.coin_detail, name='coin-detail'),
+    path('create_coin/', views.create_coin, name='create_coin'),
     path('login/', views.login, name='token_obtain_pair'),  # 登入
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # 刷新
     path('purchase/', views.process_purchase, name='purchase'),
     path('parse_jwt/', views.parse_jwt, name='parse_jwt'),
+    path('get_user_coins/<int:uid>/', views.get_user_coins, name='get_user_coins'),
+    path('get_user_purchase_history/', views.get_user_purchase_history, name='get_user_purchase_history'),
 ]

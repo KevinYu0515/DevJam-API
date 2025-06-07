@@ -14,7 +14,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR("需要至少一位 User。"))
             return
 
-        for i in range(300):
+        for i in range(100):
             sponsor = random.choice(users)
             owner = random.choice(users + [None])  # 有些可以沒有 owner
             item = random.choice(shop_items + [None])  # 有些可以沒有 item
