@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
@@ -7,7 +8,7 @@ class User(AbstractUser):
         ('disadvantage', 'Disadvantaged User'),
         ('admin', 'Admin'),
     )
-    
+
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='normal')
     created_time = models.DateTimeField(auto_now_add=True)
     headImage = models.URLField(blank=True, null=True)  # 可改成 models.ImageField(...) 若用 media 上傳
@@ -55,7 +56,7 @@ class ShopItem(models.Model):
 
 class PurchaseHistory(models.Model):
     id = models.AutoField(primary_key=True)
-    #uid = models.CharField(max_length=200)  # Temporary string field for user ID
+    uid = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)   # Temporary string field for user ID
     itemID = models.ForeignKey(ShopItem, on_delete=models.CASCADE)  # Reference to ShopItem
     purchase_time = models.DateTimeField(auto_now_add=True)  # Purchase timestamp
     amount = models.IntegerField(default=0)  # 設定預設值為1

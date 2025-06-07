@@ -1,12 +1,13 @@
 from .models import ShopItem, PurchaseHistory
 
-def purchase_item(uid, item_id):
+def purchase_item(uid, item_id, amount):
     """
     購買商品並創建購買記錄的函數
     
     Args:
         uid (str): 使用者ID
         item_id (int): 商品ID
+        amount (int): 購買數量
         
     Returns:
         dict: {
@@ -22,7 +23,8 @@ def purchase_item(uid, item_id):
         # 創建購買記錄
         purchase = PurchaseHistory.objects.create(
             uid=uid,
-            itemID=shop_item
+            itemID=item_id,
+            amount=amount
         )
         
         return {

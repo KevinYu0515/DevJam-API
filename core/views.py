@@ -5,13 +5,10 @@ from rest_framework.decorators import api_view, parser_classes
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser
-from .models import Product, Order, ShopOwner, ShopItem, User
-from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, User, UserSerializer
-from .models import Product, Order, ShopOwner, ShopItem, Coin
-from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, CoinSerializer
-import logging
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import MyTokenObtainPairSerializer
+from .serializers import *
+from core.models import *
+from core.functions import *
 
 
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
@@ -379,8 +376,6 @@ def getuser(request):
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-logger = logging.getLogger(__name__)
-
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
 @api_view(['GET', 'POST'])
 def product_list(request):
@@ -616,3 +611,57 @@ def coin_detail(request, pk):
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
+@extend_schema(
+    request={
+        'application/x-www-form-urlencoded': PurchaseHistorySerializer,
+    },
+    responses=PurchaseHistorySerializer(),
+    summary="代購商品",
+    examples=[
+        OpenApiExample(
+            'DisadvantageUsersExample',
+            summary='範例回應',
+            value={
+                    "id": 1,
+                    "uid": "1",
+                    "itemID": "1",
+                    "amount": "1"
+                },
+            response_only=True,
+        )
+    ]
+)
+@api_view(['POST'])
+def process_purchase(request):
+    jwt_payload = getattr(request, 'jwt_payload', None)
+
+    if not jwt_payload:
+        return Response({'error': 'Missing or invalid JWT'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    uid = jwt_payload.get('uid')
+    username = jwt_payload.get('username')
+    
+    # 取得購買數量（可選，預設 1）
+    amount = int(request.data.get('amount', 1))
+
+    try:
+        user = User.objects.get(id=uid, username=username)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        item_id = request.data.get('item')
+        item = ShopItem.objects.get(id=item_id)
+    except ShopItem.DoesNotExist:
+        return Response({'error': 'Item not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # 建立購買紀錄
+    history = purchase_item(uid, item_id, amount)
+
+    return Response({
+        'message': 'Purchase successful',
+        'user': user.username,
+        'item': item.itemName,
+        'amount': amount,
+        'history_id': history['data']['id']
+    }, status=status.HTTP_201_CREATED)
