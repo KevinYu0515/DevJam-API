@@ -554,13 +554,20 @@ def shopitem_detail(request, pk):
     ]
 )
 @api_view(['GET'])
-def coin_list(request):
+def coin_sponser(request):
     """
     處理硬幣的列表和創建
     GET: 獲取所有硬幣
     """
     jwt_payload = getattr(request, 'jwt_payload', None)
     coins = Coin.objects.filter(sponsor=jwt_payload.get('uid'))
+    serializer = CoinSerializer(coins, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def coin_owner(request):
+    jwt_payload = getattr(request, 'jwt_payload', None)
+    coins = Coin.objects.filter(owner=jwt_payload.get('uid'))
     serializer = CoinSerializer(coins, many=True)
     return Response(serializer.data)
 
@@ -654,6 +661,9 @@ def process_purchase(request):
 
     # 建立購買紀錄
     history = purchase_item(uid, item_id, amount)
+    print(history)
+    if not history['success']:
+        return Response({'error': history['message']}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response({
         'message': 'Purchase successful',
@@ -690,3 +700,63 @@ def get_user_coins(request, uid):
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
     return Response({'success': True, 'coins_amount': coins.count()}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def generate_qr_code(request):
+    try:
+        jwt_payload = getattr(request, 'jwt_payload', None)
+        payload = {
+            'uid': jwt_payload.get('uid'),
+            'amount': request.data.get('amount'),
+            'item_id': request.data.get('itemID')
+        }
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
+        # 產生 QR Code 圖片（Base64）
+        qr = qrcode.make(token)
+        buffered = io.BytesIO()
+        qr.save(buffered, format="PNG")
+        qr_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    return Response({'success': True, 'qr_code': f'data:image/png;base64,{qr_base64}'}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def trigger_purchase(request):
+    token = request.GET.get('token')
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        uid = payload.get('uid')
+        item_id = payload.get('item_id')
+        amount = payload.get('amount')
+
+        ShopItem = ShopItem.objects.get(id=item_id)
+        cost = ShopItem.price * amount
+
+        coins = Coin.objects.filter(owner=uid)
+        total_coins = coins.aggregate(total=sum('amount'))['total']
+
+        if total_coins < cost:
+            return JsonResponse({'success': False, 'message': 'Coin 不足'})
+
+        for coin in coins:
+            if cost > 0:
+                if coin.amount >= cost:
+                    coin.amount -= cost
+                else:
+                    cost -= coin.amount
+                    coin.amount = 0
+                coin.usedTime = datetime.now()
+                coin.itemID = ShopItem.id
+                coin.save()
+            else:
+                break
+
+        return JsonResponse({'success': True, 'message': '購買成功'})
+    
+    except jwt.ExpiredSignatureError:
+        return JsonResponse({'success': False, 'message': 'Token 已過期'})
+    except jwt.InvalidTokenError:
+        return JsonResponse({'success': False, 'message': '無效的 Token'})

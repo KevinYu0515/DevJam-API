@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import *
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+import jwt, qrcode, io, base64
 
 # 商品序列化器：用於將 Product 模型轉換成 JSON 格式，以及將 JSON 資料轉換成 Product 模型
 class ProductSerializer(serializers.ModelSerializer):
@@ -78,6 +79,7 @@ class UserSerializer(serializers.ModelSerializer):
         elif user_type == 'disadvantage':
             # DisadvantageUser 需要 category 預設 level 1
             DisadvantageUser.objects.create(user=user, category='level 1')
+
         elif user_type == 'admin':
             AdminUser.objects.create(user=user)
 

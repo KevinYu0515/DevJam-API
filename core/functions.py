@@ -1,4 +1,4 @@
-from .models import ShopItem, PurchaseHistory
+from .models import Product, PurchaseHistory
 
 def purchase_item(uid, item_id, amount):
     """
@@ -17,6 +17,20 @@ def purchase_item(uid, item_id, amount):
         }
     """
     try:
+        item = Product.objects.get(id=item_id)
+
+        # 檢查庫存是否足夠
+        if item.amount < amount:
+            return {
+                'success': False,
+                'message': '商品庫存不足',
+                'data': None
+            }
+
+        # 減少商品庫存
+        item.amount -= amount
+        item.save()
+
         # 創建購買記錄
         purchase = PurchaseHistory.objects.create(
             uid=uid,
@@ -35,7 +49,7 @@ def purchase_item(uid, item_id, amount):
             }
         }
         
-    except ShopItem.DoesNotExist:
+    except Product.DoesNotExist:
         return {
             'success': False,
             'message': '商品不存在',
