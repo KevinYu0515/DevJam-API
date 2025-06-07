@@ -29,7 +29,9 @@ SECRET_KEY = "django-insecure-pqq6zdvz$34bc!jk9zlm=(1)%r10l)!q)ws@+#@ci0%nc-i&yl
 DEBUG = True
 SITE_ID = 1
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "devjam-api-1070656881929.europe-west1.run.app"
+]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
