@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from .models import Product, Order, ShopOwner, ShopItem, PurchaseHistory
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-    
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # 商品序列化器：用於將 Product 模型轉換成 JSON 格式，以及將 JSON 資料轉換成 Product 模型
 class ProductSerializer(serializers.ModelSerializer):
@@ -108,21 +107,26 @@ class CoinSerializer(serializers.ModelSerializer):
         fields = ['id', 'createTime', 'sponsor', 'owner', 'usedTime', 'itemID']
         read_only_fields = ['id', 'createTime']  # 這些欄位只能讀取，不能修改 
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
+class LoginSerializer(serializers.Serializer):
+    account = serializers.CharField()
+    password = serializers.CharField(write_only=True)
 
-        # 加入自訂欄位到 access token payload
-        token['uid'] = user.id
-        token['username'] = user.username
-        token['user_type'] = user.user_type
+    def validate(self, data):
+        account = data.get('account')
+        password = data.get('password')
+        try:
+            user = User.objects.get(account=account)
+        except User.DoesNotExist:
+            raise serializers.ValidationError('Invalid account or password')
+        if not user.check_password(password):
+            raise serializers.ValidationError('Invalid account or password')
 
-        return token
-
-    def validate(self, attrs):
-        data = super().validate(attrs)
-
-        # 同時把這些資訊放在 response body，方便前端拿到
-
-        return data
+        refresh = RefreshToken.for_user(user)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'uid': user.id,
+            'username': user.username,
+            'user_type': user.user_type,
+            'account': user.account,
+        }

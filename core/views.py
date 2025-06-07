@@ -372,8 +372,39 @@ def adduser(request):
     ]
 )
 @api_view(['GET'])
-def getuser(request):
+def getuser_disadv(request):
     users = User.objects.filter(user_type='disadvantage')
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@extend_schema(
+    responses=UserSerializer(many=True),
+    summary="取得 user_type 為 normal 的所有使用者",
+    examples=[
+        OpenApiExample(
+            'NormalUsersExample',
+            summary='範例回應',
+            value=[
+                {
+                    "id": 1,
+                    "username": "alice123",
+                    "email": "alice@example.com",
+                    "user_type": "disadvantage"
+                },
+                {
+                    "id": 2,
+                    "username": "bob456",
+                    "email": "bob@example.com",
+                    "user_type": "disadvantage"
+                }
+            ],
+            response_only=True,
+        )
+    ]
+)
+@api_view(['GET'])
+def getuser_normal(request):
+    users = User.objects.filter(user_type='normal')
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -609,8 +640,24 @@ def coin_detail(request, pk):
         
 
 
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
+
+@extend_schema(
+    request=LoginSerializer,
+    examples=[
+        OpenApiExample(
+            'LoginExample',
+            summary='使用 account 和 password 登入',
+            value={'account': 'user123', 'password': 'mypassword'},
+            request_only=True,
+        ),
+    ],
+)
+@api_view(['POST'])
+def login(request):
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        return Response(serializer.validated_data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
     request={
