@@ -1,0 +1,12 @@
+*.sqlite3
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.pyzw
+*.pyzwz
+*.pyzwzw
+__pycache__/
+.venv/
