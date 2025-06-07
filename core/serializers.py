@@ -122,11 +122,13 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('Invalid account or password')
 
         refresh = RefreshToken.for_user(user)
+
+        # 自訂加入欄位到 access token payload
+        refresh['uid'] = user.id
+        refresh['username'] = user.username
+        refresh['user_type'] = user.user_type
+        refresh['account'] = user.account
         return {
             'refresh': str(refresh),
             'access': str(refresh.access_token),
-            'uid': user.id,
-            'username': user.username,
-            'user_type': user.user_type,
-            'account': user.account,
         }
