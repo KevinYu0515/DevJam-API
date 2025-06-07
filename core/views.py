@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view, parser_classes
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser
-from .models import Product, Order, ShopOwner, ShopItem
+from .models import Product, Order, ShopOwner, ShopItem, User
 from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, User, UserSerializer
 
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
@@ -274,6 +274,45 @@ def shopitem_detail(request, pk):
     elif request.method == 'DELETE':
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['POST'])
+def adduser(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema(
+    responses=UserSerializer(many=True),
+    summary="取得 user_type 為 disadvantage 的所有使用者",
+    examples=[
+        OpenApiExample(
+            'DisadvantageUsersExample',
+            summary='範例回應',
+            value=[
+                {
+                    "id": 1,
+                    "username": "alice123",
+                    "email": "alice@example.com",
+                    "user_type": "disadvantage"
+                },
+                {
+                    "id": 2,
+                    "username": "bob456",
+                    "email": "bob@example.com",
+                    "user_type": "disadvantage"
+                }
+            ],
+            response_only=True,
+        )
+    ]
+)
+@api_view(['GET'])
+def getuser(request):
+    users = User.objects.filter(user_type='disadvantage')
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
     
 
 @extend_schema(

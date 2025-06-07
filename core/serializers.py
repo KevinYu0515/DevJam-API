@@ -50,6 +50,21 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # 使用 create_user 來正確處理密碼雜湊
         return User.objects.create_user(**validated_data)
+
+User = get_user_model()
+
+class UserSerializer(serializers.ModelSerializer):
+    # 定義使用者模型對應的序列化器
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'email', 'user_type', 'created_time', 'headImage', 'account']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    def create(self, validated_data):
+        # 使用 create_user 來正確處理密碼雜湊
+        return User.objects.create_user(**validated_data)
 from rest_framework import serializers
 from .models import Product, Order, ShopOwner, ShopItem, PurchaseHistory, Coin
 
