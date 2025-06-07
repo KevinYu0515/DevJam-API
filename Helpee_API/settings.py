@@ -30,6 +30,7 @@ DEBUG = True
 SITE_ID = 1
 
 ALLOWED_HOSTS = [
+    "localhost",
     "devjam-api-1070656881929.europe-west1.run.app"
 ]
 
