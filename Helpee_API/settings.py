@@ -28,13 +28,20 @@ SECRET_KEY = "django-insecure-pqq6zdvz$34bc!jk9zlm=(1)%r10l)!q)ws@+#@ci0%nc-i&yl
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 SITE_ID = 1
+CORS_ALLOW_CREDENTIALS = True
 
 ALLOWED_HOSTS = [
     "localhost",
     "devjam-api-1070656881929.europe-west1.run.app"
 ]
 
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
+]
+
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -49,7 +56,7 @@ ROOT_URLCONF = "Helpee_API.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -62,17 +69,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "Helpee_API.wsgi.application"
-
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
 
 
 # Password validation
@@ -105,7 +101,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -129,6 +124,8 @@ DATABASES = {
 }
 
 INSTALLED_APPS = [
+    'corsheaders',
+    'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -162,7 +159,7 @@ SOCIAL_AUTH_PIPELINE = (
     'core.auth_pipeline.assign_user_role',  # ⬅️ 用 core 開頭
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
-    'social_core.pipeline.user.user_details',
+    'social_core.pipeline.uawser.user_details',
 )
 
 REST_FRAMEWORK = {

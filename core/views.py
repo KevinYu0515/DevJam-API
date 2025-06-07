@@ -1,8 +1,12 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, parser_classes
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from rest_framework.response import Response
+from rest_framework.parsers import FormParser
+from .models import Product, Order, ShopOwner, ShopItem
+from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, User, UserSerializer
 from .models import Product, Order, ShopOwner, ShopItem, Coin
 from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, CoinSerializer
 import logging
@@ -10,6 +14,27 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
+@extend_schema(
+    request={
+        'application/x-www-form-urlencoded': ProductSerializer,
+    },
+    responses={
+        200: ProductSerializer(many=True),   # GET 回傳多筆資料
+        201: ProductSerializer,              # POST 成功回傳單筆資料
+        400: OpenApiExample(
+            "Bad Request Example",
+            value={"price": ["This field is required."]},
+            response_only=True
+        )
+    },
+    examples=[
+        OpenApiExample(
+            "Form Example",
+            value={"name": "Apple", "price": 25},
+            request_only=True
+        )
+    ]
+)
 @api_view(['GET', 'POST'])
 def product_list(request):
     # 處理 GET 請求：獲取所有商品
@@ -35,6 +60,19 @@ def product_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # 商品詳情視圖：處理 PUT（更新商品）和 DELETE（刪除商品）請求
+@extend_schema(
+    request={
+        'application/x-www-form-urlencoded': ProductSerializer,
+    },
+    responses=ProductSerializer,
+    examples=[
+        OpenApiExample(
+            "Form Example",
+            value={"name": "Apple", "price": 25},
+            request_only=True
+        )
+    ]
+)
 @api_view(['PUT', 'DELETE'])
 def product_detail(request, pk):
     try:
@@ -65,6 +103,27 @@ def product_detail(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # 訂單列表視圖：處理 GET（獲取所有訂單）和 POST（創建新訂單）請求
+@extend_schema(
+    request={
+        'application/x-www-form-urlencoded': OrderSerializer,
+    },
+    responses={
+        200: OrderSerializer(many=True),   # GET 回傳多筆訂單
+        201: OrderSerializer,               # POST 創建成功回傳單筆訂單
+        400: OpenApiResponse(description="Bad Request"),  # 失敗回應
+    },
+    examples=[
+        OpenApiExample(
+            name="Create Order Example",
+            value={
+                "product": 1,
+                "user": 5,
+                "amount": 2
+            },
+            request_only=True
+        )
+    ]
+)
 @api_view(['GET', 'POST'])
 def order_list(request):
     if request.method == 'GET':
@@ -94,6 +153,27 @@ def order_detail(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # 商店列表視圖：處理 GET（獲取所有商店）和 POST（創建新商店）請求
+@extend_schema(
+    request={
+        'application/x-www-form-urlencoded': ShopOwnerSerializer,
+    },
+    responses={
+        200: ShopOwnerSerializer(many=True),  # GET 回傳多筆商店資料
+        201: ShopOwnerSerializer,              # POST 創建成功回傳單筆商店資料
+        400: OpenApiResponse(description="Bad Request"),  # 錯誤回應
+    },
+    examples=[
+        OpenApiExample(
+            name="Create ShopOwner Example",
+            value={
+                "name": "小王便利店",
+                "location": "台北市中正區",
+                "headimage": "base64 or URL or skip if optional"
+            },
+            request_only=True
+        )
+    ]
+)
 @api_view(['GET', 'POST'])
 def shopowner_list(request):
     if request.method == 'GET':
@@ -123,6 +203,27 @@ def shopowner_detail(request, pk):
         return Response(serializer.data)
 
 # 商店商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
+@extend_schema(
+    request={
+        'application/x-www-form-urlencoded': ShopItemSerializer,
+    },
+     responses={
+        200: ShopItemSerializer(many=True),  # GET 回傳多筆商品
+        201: ShopItemSerializer,              # POST 創建成功回傳單筆商品
+        400: OpenApiResponse(description="Bad Request"),
+    },
+    examples=[
+        OpenApiExample(
+            name="Create Shop Item Example",
+            value={
+                "shopID": 1,
+                "itemName": "鮮奶茶",
+                "price": "45.0"
+            },
+            request_only=True
+        )
+    ]
+)
 @api_view(['GET', 'POST'])
 def shopitem_list(request):
     if request.method == 'GET':
@@ -140,6 +241,23 @@ def shopitem_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # 商店商品詳情視圖：處理 GET（獲取單一商品）、PUT（更新商品）和 DELETE（刪除商品）請求
+@extend_schema(
+    request={
+        'application/x-www-form-urlencoded': ShopItemSerializer,
+    },
+    responses=ShopItemSerializer,
+    examples=[
+        OpenApiExample(
+            name="Create Shop Item Example",
+            value={
+                "shopID": 1,
+                "itemName": "鮮奶茶",
+                "price": "45.0"
+            },
+            request_only=True
+        )
+    ]
+)
 @api_view(['GET', 'PUT', 'DELETE'])
 def shopitem_detail(request, pk):
     try:
@@ -161,80 +279,3 @@ def shopitem_detail(request, pk):
     elif request.method == 'DELETE':
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-# Coin API views
-@api_view(['GET', 'POST'])
-def coin_list(request):
-    """
-    處理硬幣的列表和創建
-    GET: 獲取所有硬幣
-    POST: 創建新硬幣
-    """
-    if request.method == 'GET':
-        coins = Coin.objects.all()
-        serializer = CoinSerializer(coins, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = CoinSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['GET', 'PUT', 'DELETE'])
-def coin_detail(request, pk):
-    """
-    處理單個硬幣的獲取、更新和刪除
-    GET: 獲取特定硬幣
-    PUT: 更新硬幣
-    DELETE: 刪除硬幣
-    """
-    try:
-        coin = Coin.objects.get(pk=pk)
-    except Coin.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        logger.error(f"Error retrieving coin: {str(e)}")
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    if request.method == 'GET':
-        try:
-            serializer = CoinSerializer(coin)
-            return Response(serializer.data)
-        except Exception as e:
-            logger.error(f"Error serializing coin: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    elif request.method == 'PUT':
-        try:
-            # 檢查請求資料
-            if not request.data:
-                return Response({'error': '請求資料不能為空'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # 只更新提供的欄位
-            serializer = CoinSerializer(coin, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            
-            # 返回詳細的驗證錯誤
-            error_details = {}
-            for field, errors in serializer.errors.items():
-                error_details[field] = str(errors[0])
-            return Response({
-                'error': '資料驗證失敗',
-                'details': error_details
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
-        except Exception as e:
-            logger.error(f"Error updating coin: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    elif request.method == 'DELETE':
-        try:
-            coin.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Exception as e:
-            logger.error(f"Error deleting coin: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

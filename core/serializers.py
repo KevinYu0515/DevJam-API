@@ -1,4 +1,8 @@
 from rest_framework import serializers
+from .models import Product, Order, ShopOwner, ShopItem, PurchaseHistory
+    
+from django.contrib.auth import get_user_model
+
 from .models import Product, Order, ShopOwner, ShopItem, PurchaseHistory, Coin
 
 # 商品序列化器：用於將 Product 模型轉換成 JSON 格式，以及將 JSON 資料轉換成 Product 模型
@@ -14,7 +18,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'product', 'product_name', 'user', 'count', 'ordertime']
+        fields = ['id', 'product', 'product_name', 'user', 'amount', 'ordertime']
         read_only_fields = ['ordertime']  # 訂單時間自動生成，不可修改
 
 class ShopOwnerSerializer(serializers.ModelSerializer):
@@ -32,10 +36,4 @@ class ShopItemSerializer(serializers.ModelSerializer):
 class PurchaseHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseHistory
-        fields = ['id', 'itemID', 'purchase_time', 'amount']
-
-class CoinSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Coin
-        fields = ['id', 'createTime', 'sponsor', 'owner', 'usedTime', 'itemID']
-        read_only_fields = ['id', 'createTime']  # 這些欄位只能讀取，不能修改 
+        fields = ['id', 'itemID', 'purchase_time', 'amount'] 
