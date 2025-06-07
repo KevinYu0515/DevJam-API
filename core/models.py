@@ -8,11 +8,36 @@ class User(AbstractUser):
         ('disadvantage', 'Disadvantaged User'),
         ('admin', 'Admin'),
     )
-
-    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='normal')
     created_time = models.DateTimeField(auto_now_add=True)
-    headImage = models.URLField(blank=True, null=True)  # 可改成 models.ImageField(...) 若用 media 上傳
-    account = models.CharField(max_length=100, blank=True, null=True)  # 可用 DecimalField 做餘額
+    headImage = models.URLField(blank=True, null=True)
+    account = models.CharField(max_length=100, blank=True, null=True)
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='normal')
+
+    def get_user_type(self):
+        if hasattr(self, 'normaluser'):
+            return 'normal'
+        if hasattr(self, 'disadvantageuser'):
+            return 'disadvantage'
+        if hasattr(self, 'adminuser'):
+            return 'admin'
+        return 'unknown'
+
+class NormalUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='normaluser')
+    # 可擴充 NormalUser 特有欄位
+
+class DisadvantageUser(models.Model):
+    LEVEL_CHOICES = (
+        ('level 1', 'Level 1'),
+        ('level 2', 'Level 2'),
+        ('level 3', 'Level 3'),
+    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='disadvantageuser')
+    category = models.CharField(max_length=10, choices=LEVEL_CHOICES, default='level 1')
+
+class AdminUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='adminuser')
+    # 可擴充 AdminUser 特有欄位
 
 # Create your models here.
 

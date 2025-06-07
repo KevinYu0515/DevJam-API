@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Order, ShopOwner, ShopItem, PurchaseHistory
+from .models import *
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -39,34 +39,39 @@ class PurchaseHistorySerializer(serializers.ModelSerializer):
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+    category = serializers.SerializerMethodField()
     # 定義使用者模型對應的序列化器
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'email', 'user_type', 'created_time', 'headImage', 'account']
+        fields = ['id', 'username', 'email', 'user_type', 'created_time', 'headImage', 'account', 'category']
         extra_kwargs = {
             'password': {'write_only': True}
         }
+    
+    def get_category(self, obj):
+        if obj.user_type == 'disadvantage' and hasattr(obj, 'disadvantageuser'):
+            return obj.disadvantageuser.category
+        return None
 
     def create(self, validated_data):
-        # 使用 create_user 來正確處理密碼雜湊
-        return User.objects.create_user(**validated_data)
+        user_type = validated_data.get('user_type', 'normal')
+        password = validated_data.pop('password')
+        
+        # 先創建 User 實例
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
 
-User = get_user_model()
+        # 根據 user_type 創建對應子模型
+        if user_type == 'normal':
+            NormalUser.objects.create(user=user)
+        elif user_type == 'disadvantage':
+            # DisadvantageUser 需要 category 預設 level 1
+            DisadvantageUser.objects.create(user=user, category='level 1')
+        elif user_type == 'admin':
+            AdminUser.objects.create(user=user)
 
-class UserSerializer(serializers.ModelSerializer):
-    # 定義使用者模型對應的序列化器
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'password', 'email', 'user_type', 'created_time', 'headImage', 'account']
-        extra_kwargs = {
-            'password': {'write_only': True}
-        }
-
-    def create(self, validated_data):
-        # 使用 create_user 來正確處理密碼雜湊
-        return User.objects.create_user(**validated_data)
-from rest_framework import serializers
-from .models import Product, Order, ShopOwner, ShopItem, PurchaseHistory, Coin
+        return user
 
 # 商品序列化器：用於將 Product 模型轉換成 JSON 格式，以及將 JSON 資料轉換成 Product 模型
 class ProductSerializer(serializers.ModelSerializer):
