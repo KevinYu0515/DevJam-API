@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Product, Order, ShopOwner, ShopItem, PurchaseHistory
+    
+from django.contrib.auth import get_user_model
 
 # 商品序列化器：用於將 Product 模型轉換成 JSON 格式，以及將 JSON 資料轉換成 Product 模型
 class ProductSerializer(serializers.ModelSerializer):
@@ -33,3 +35,23 @@ class PurchaseHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseHistory
         fields = ['id', 'itemID', 'purchase_time', 'amount'] 
+
+User = get_user_model()
+
+class UserSerializer(serializers.ModelSerializer):
+    # 定義使用者模型對應的序列化器
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'email', 'user_type']
+        # 將 password 欄位設為 write-only，其餘欄位預設為必填
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'username': {'required': True},
+            'email': {'required': True},
+            'user_type': {'required': True},
+        }
+
+    def create(self, validated_data):
+        # 使用 create_user() 來建立使用者（內部會自動哈希密碼）:contentReference[oaicite:2]{index=2}。
+        user = User.objects.create_user(**validated_data)
+        return user

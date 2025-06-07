@@ -57,3 +57,5 @@ class PurchaseHistory(models.Model):
 
     def __str__(self):
         return f"Purchase {self.id} - {self.itemID.itemName}"
+
+

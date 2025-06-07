@@ -6,7 +6,7 @@ from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser
 from .models import Product, Order, ShopOwner, ShopItem
-from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer
+from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, User, UserSerializer
 
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
 @extend_schema(
@@ -274,3 +274,67 @@ def shopitem_detail(request, pk):
     elif request.method == 'DELETE':
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+@extend_schema(
+    # 指定請求格式為 UserSerializer，回應為 UserSerializer
+    request={
+        'application/x-www-form-urlencoded': UserSerializer,
+    },
+    responses={201: UserSerializer},
+    # 提供範例請求資料
+    examples=[
+        OpenApiExample(
+            'UserCreateExample',
+            summary='User 新增範例',
+            request_only=True,
+            value={
+                "username": "johndoe",
+                "password": "SafePass123",
+                "email": "johndoe@example.com",
+                "user_type": "normal"
+            }
+        )
+    ]
+)
+@api_view(['POST'])
+def adduser(request):
+    # 使用剛剛定義的 UserSerializer 處理輸入資料
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()  # 實際呼叫 create_user()
+        # 成功時回傳序列化後的資料和 201 狀態碼
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    # 若驗證失敗，回傳錯誤訊息和 400 狀態碼
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema(
+    responses=UserSerializer(many=True),
+    summary="取得 user_type 為 disadvantage 的所有使用者",
+    examples=[
+        OpenApiExample(
+            'DisadvantageUsersExample',
+            summary='範例回應',
+            value=[
+                {
+                    "id": 1,
+                    "username": "alice123",
+                    "email": "alice@example.com",
+                    "user_type": "disadvantage"
+                },
+                {
+                    "id": 2,
+                    "username": "bob456",
+                    "email": "bob@example.com",
+                    "user_type": "disadvantage"
+                }
+            ],
+            response_only=True,
+        )
+    ]
+)
+@api_view(['GET'])
+def getuser(request):
+    users = User.objects.filter(user_type='disadvantage')
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
