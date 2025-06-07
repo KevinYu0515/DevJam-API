@@ -7,6 +7,12 @@ from rest_framework.response import Response
 from rest_framework.parsers import FormParser
 from .models import Product, Order, ShopOwner, ShopItem, User
 from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, User, UserSerializer
+from .models import Product, Order, ShopOwner, ShopItem, Coin
+from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, CoinSerializer
+import logging
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import MyTokenObtainPairSerializer
+
 
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
 @extend_schema(
@@ -372,14 +378,6 @@ def getuser(request):
     users = User.objects.filter(user_type='disadvantage')
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
-from django.shortcuts import render
-from django.http import JsonResponse
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .models import Product, Order, ShopOwner, ShopItem, Coin
-from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, CoinSerializer
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -612,3 +610,9 @@ def coin_detail(request, pk):
         except Exception as e:
             logger.error(f"Error deleting coin: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+

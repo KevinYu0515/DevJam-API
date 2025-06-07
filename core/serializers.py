@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Product, Order, ShopOwner, ShopItem, PurchaseHistory
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
     
 from django.contrib.auth import get_user_model
 
@@ -106,3 +107,22 @@ class CoinSerializer(serializers.ModelSerializer):
         model = Coin
         fields = ['id', 'createTime', 'sponsor', 'owner', 'usedTime', 'itemID']
         read_only_fields = ['id', 'createTime']  # 這些欄位只能讀取，不能修改 
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # 加入自訂欄位到 access token payload
+        token['uid'] = user.id
+        token['username'] = user.username
+        token['user_type'] = user.user_type
+
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # 同時把這些資訊放在 response body，方便前端拿到
+
+        return data
