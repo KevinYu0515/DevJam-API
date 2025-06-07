@@ -27,8 +27,8 @@ RUN pip install --upgrade pip \
 # 收集靜態檔案（避免部署時錯誤）
 RUN python manage.py collectstatic --noinput
 
-ENV PORT 6007
-EXPOSE 6007
+ENV PORT 8080
+EXPOSE 8080
 
 # 執行指令
-CMD ["gunicorn", "Helpee_API.wsgi:application", "--bind", "0.0.0.0:6007"]
+CMD ["gunicorn", "Helpee_API.wsgi:application", "--bind", "0.0.0.0:8080"]
