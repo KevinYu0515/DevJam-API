@@ -14,7 +14,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'product', 'product_name', 'user', 'count', 'ordertime']
+        fields = ['id', 'product', 'product_name', 'user', 'amount', 'ordertime']
         read_only_fields = ['ordertime']  # 訂單時間自動生成，不可修改
 
 class ShopOwnerSerializer(serializers.ModelSerializer):
