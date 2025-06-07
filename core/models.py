@@ -7,7 +7,11 @@ class User(AbstractUser):
         ('disadvantage', 'Disadvantaged User'),
         ('admin', 'Admin'),
     )
+    
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='normal')
+    created_time = models.DateTimeField(auto_now_add=True)
+    headImage = models.URLField(blank=True, null=True)  # 可改成 models.ImageField(...) 若用 media 上傳
+    account = models.CharField(max_length=100, blank=True, null=True)  # 可用 DecimalField 做餘額
 
 # Create your models here.
 

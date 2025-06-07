@@ -42,16 +42,11 @@ class UserSerializer(serializers.ModelSerializer):
     # 定義使用者模型對應的序列化器
     class Meta:
         model = User
-        fields = ['username', 'password', 'email', 'user_type']
-        # 將 password 欄位設為 write-only，其餘欄位預設為必填
+        fields = ['id', 'username', 'password', 'email', 'user_type', 'created_time', 'headImage', 'account']
         extra_kwargs = {
-            'password': {'write_only': True},
-            'username': {'required': True},
-            'email': {'required': True},
-            'user_type': {'required': True},
+            'password': {'write_only': True}
         }
 
     def create(self, validated_data):
-        # 使用 create_user() 來建立使用者（內部會自動哈希密碼）:contentReference[oaicite:2]{index=2}。
-        user = User.objects.create_user(**validated_data)
-        return user
+        # 使用 create_user 來正確處理密碼雜湊
+        return User.objects.create_user(**validated_data)

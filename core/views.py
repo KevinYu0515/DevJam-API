@@ -277,12 +277,8 @@ def shopitem_detail(request, pk):
     
 
 @extend_schema(
-    # 指定請求格式為 UserSerializer，回應為 UserSerializer
-    request={
-        'application/x-www-form-urlencoded': UserSerializer,
-    },
+    request={'application/x-www-form-urlencoded': UserSerializer},
     responses={201: UserSerializer},
-    # 提供範例請求資料
     examples=[
         OpenApiExample(
             'UserCreateExample',
@@ -292,20 +288,19 @@ def shopitem_detail(request, pk):
                 "username": "johndoe",
                 "password": "SafePass123",
                 "email": "johndoe@example.com",
-                "user_type": "normal"
+                "user_type": "normal",
+                "headImage": "https://example.com/avatar.png",
+                "account": "A123456789"
             }
         )
     ]
 )
 @api_view(['POST'])
 def adduser(request):
-    # 使用剛剛定義的 UserSerializer 處理輸入資料
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()  # 實際呼叫 create_user()
-        # 成功時回傳序列化後的資料和 201 狀態碼
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    # 若驗證失敗，回傳錯誤訊息和 400 狀態碼
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
