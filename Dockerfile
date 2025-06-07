@@ -31,4 +31,4 @@ ENV PORT 8080
 EXPOSE 8080
 
 # 執行指令
-CMD ["gunicorn", "Helpee_API.wsgi:application", "--bind", "0.0.0.0:8080"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:$PORT"]
