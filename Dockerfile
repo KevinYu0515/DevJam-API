@@ -31,4 +31,4 @@ ENV PORT 8080
 EXPOSE 8080
 
 # 執行指令
-CMD ["python", "manage.py", "runserver", "0.0.0.0:$PORT"]
+CMD ["sh", "-c", "python manage.py runserver 0.0.0.0:$PORT"]
