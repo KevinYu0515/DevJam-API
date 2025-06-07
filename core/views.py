@@ -3,8 +3,11 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Product, Order, ShopOwner, ShopItem
-from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer
+from .models import Product, Order, ShopOwner, ShopItem, Coin
+from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer, CoinSerializer
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
 @api_view(['GET', 'POST'])
@@ -158,3 +161,80 @@ def shopitem_detail(request, pk):
     elif request.method == 'DELETE':
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# Coin API views
+@api_view(['GET', 'POST'])
+def coin_list(request):
+    """
+    處理硬幣的列表和創建
+    GET: 獲取所有硬幣
+    POST: 創建新硬幣
+    """
+    if request.method == 'GET':
+        coins = Coin.objects.all()
+        serializer = CoinSerializer(coins, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        serializer = CoinSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def coin_detail(request, pk):
+    """
+    處理單個硬幣的獲取、更新和刪除
+    GET: 獲取特定硬幣
+    PUT: 更新硬幣
+    DELETE: 刪除硬幣
+    """
+    try:
+        coin = Coin.objects.get(pk=pk)
+    except Coin.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error retrieving coin: {str(e)}")
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    if request.method == 'GET':
+        try:
+            serializer = CoinSerializer(coin)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error serializing coin: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    elif request.method == 'PUT':
+        try:
+            # 檢查請求資料
+            if not request.data:
+                return Response({'error': '請求資料不能為空'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 只更新提供的欄位
+            serializer = CoinSerializer(coin, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            
+            # 返回詳細的驗證錯誤
+            error_details = {}
+            for field, errors in serializer.errors.items():
+                error_details[field] = str(errors[0])
+            return Response({
+                'error': '資料驗證失敗',
+                'details': error_details
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            logger.error(f"Error updating coin: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    elif request.method == 'DELETE':
+        try:
+            coin.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            logger.error(f"Error deleting coin: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

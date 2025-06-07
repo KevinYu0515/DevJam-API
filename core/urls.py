@@ -9,5 +9,7 @@ urlpatterns = [
     path('shopowner/', views.shopowner_list, name='shopowner-list'),
     path('shopowner/<int:pk>/', views.shopowner_detail, name='shopowner-detail'),
     path('shopitem/', views.shopitem_list, name='shopitem-list'),
-    path('shopitem/<int:pk>/', views.shopitem_detail, name='shopitem-detail')
+    path('shopitem/<int:pk>/', views.shopitem_detail, name='shopitem-detail'),
+    path('coin/', views.coin_list, name='coin-list'),
+    path('coin/<int:pk>/', views.coin_detail, name='coin-detail'),
 ]
