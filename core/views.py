@@ -3,8 +3,8 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Product, Order, ShopOwner
-from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer
+from .models import Product, Order, ShopOwner, ShopItem
+from .serializers import ProductSerializer, OrderSerializer, ShopOwnerSerializer, ShopItemSerializer
 
 # 商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
 @api_view(['GET', 'POST'])
@@ -90,19 +90,71 @@ def order_detail(request, pk):
         order.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-# 商店老闆列表視圖：處理 GET（獲取所有商店老闆）和 POST（創建新商店老闆）請求
+# 商店列表視圖：處理 GET（獲取所有商店）和 POST（創建新商店）請求
 @api_view(['GET', 'POST'])
 def shopowner_list(request):
     if request.method == 'GET':
-        # 獲取所有商店老闆
+        # 獲取所有商店
         shopowners = ShopOwner.objects.all()
         serializer = ShopOwnerSerializer(shopowners, many=True)
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        # 創建新商店老闆
+        # 創建新商店
         serializer = ShopOwnerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# 商店詳情視圖：只處理 GET（獲取單一商店）請求
+@api_view(['GET'])
+def shopowner_detail(request, pk):
+    try:
+        shopowner = ShopOwner.objects.get(pk=pk)
+    except ShopOwner.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = ShopOwnerSerializer(shopowner)
+        return Response(serializer.data)
+
+# 商店商品列表視圖：處理 GET（獲取所有商品）和 POST（創建新商品）請求
+@api_view(['GET', 'POST'])
+def shopitem_list(request):
+    if request.method == 'GET':
+        # 獲取所有商店商品
+        items = ShopItem.objects.all()
+        serializer = ShopItemSerializer(items, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        # 創建新商店商品
+        serializer = ShopItemSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# 商店商品詳情視圖：處理 GET（獲取單一商品）、PUT（更新商品）和 DELETE（刪除商品）請求
+@api_view(['GET', 'PUT', 'DELETE'])
+def shopitem_detail(request, pk):
+    try:
+        item = ShopItem.objects.get(pk=pk)
+    except ShopItem.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = ShopItemSerializer(item)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        serializer = ShopItemSerializer(item, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Order, ShopOwner
+from .models import Product, Order, ShopOwner, ShopItem, PurchaseHistory
 
 # 商品序列化器：用於將 Product 模型轉換成 JSON 格式，以及將 JSON 資料轉換成 Product 模型
 class ProductSerializer(serializers.ModelSerializer):
@@ -20,4 +20,16 @@ class OrderSerializer(serializers.ModelSerializer):
 class ShopOwnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShopOwner
-        fields = ['id', 'name', 'location', 'headimage'] 
+        fields = ['id', 'name', 'location', 'headimage']
+
+class ShopItemSerializer(serializers.ModelSerializer):
+    shop_name = serializers.CharField(source='shop.name', read_only=True)  # 顯示商店名稱
+
+    class Meta:
+        model = ShopItem
+        fields = ['id', 'shopID', 'shop_name', 'itemName', 'price']
+
+class PurchaseHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseHistory
+        fields = ['id', 'itemID', 'purchase_time', 'amount'] 

@@ -15,7 +15,7 @@ class Product(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField(upload_to='products/', null=True, blank=True)
+    image = models.TextField()
 
     def __str__(self):
         return self.name
@@ -34,7 +34,26 @@ class ShopOwner(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200)
     location = models.CharField(max_length=200)
-    headimage = models.ImageField(upload_to='shop_owners/', null=True, blank=True)
+    headimage = models.TextField()
 
     def __str__(self):
         return self.name
+
+class ShopItem(models.Model):
+    id = models.AutoField(primary_key=True)
+    shopID = models.ForeignKey(ShopOwner, on_delete=models.CASCADE)  # 關聯到商店
+    itemName = models.CharField(max_length=200)
+    price = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.itemName} - {self.shop.name}"
+
+class PurchaseHistory(models.Model):
+    id = models.AutoField(primary_key=True)
+    #uid = models.CharField(max_length=200)  # Temporary string field for user ID
+    itemID = models.ForeignKey(ShopItem, on_delete=models.CASCADE)  # Reference to ShopItem
+    purchase_time = models.DateTimeField(auto_now_add=True)  # Purchase timestamp
+    amount = models.IntegerField()
+
+    def __str__(self):
+        return f"Purchase {self.id} - {self.itemID.itemName}"
