@@ -21,5 +21,6 @@ urlpatterns = [
     path('coin/<int:pk>/', views.coin_detail, name='coin-detail'),
     path('login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),  # 登入
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # 刷新
-    path('purchase/', views.process_purchase, name='purchase')
+    path('purchase/', views.process_purchase, name='purchase'),
+    path('donate/', views.process_donate, name='donate')
 ]
